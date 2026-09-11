@@ -333,19 +333,19 @@ some gap between artificial and real-world damage will always remain.
 
 ## 8. Result screenshots
 
-### Test 1 — [describe the scenario]
+### Test 1 
 
 ![Test 1](Images/result_test1.png)
 
 
 
-### Test 2 — [describe the scenario]
+### Test 2 
 
 ![Test 2](Images/result_test2.png)
 
 
 
-### Test 3 — [describe the scenario]
+### Test 3 
 
 ![Test 3](Images/result_test3.png)
 
