@@ -1,0 +1,25 @@
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.egg-info/
+
+# Model weights (large binaries, fetched/trained separately)
+models/**/*.pt
+models/**/*.pth
+
+# Data (not redistributed)
+data/raw/
+data/plate_detection_dataset/
+data/clean_plate_crops/
+data/sample_outputs/*
+
+# Outputs
+outputs/*
+!outputs/.gitkeep
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store

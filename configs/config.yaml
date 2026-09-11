@@ -1,0 +1,134 @@
+# =========================================================
+# Forensic License Plate Enhancement & Recovery - Config
+# =========================================================
+
+detection:
+  # Path to fine-tuned YOLOv8 weights (see notebooks/01_finetune_plate_detector.ipynb)
+  weights: "models/plate_detector/best.pt"
+  # Fallback pretrained COCO/general detector if fine-tuned weights are absent
+  fallback_weights: "yolov8n.pt"
+  conf_threshold: 0.25
+  iou_threshold: 0.45
+  # Minimum crop size (px) below which we upsample before enhancement
+  min_crop_height: 32
+
+# enhancement:
+
+#   perspective:
+#     enabled: true
+#     target_width: 300
+#     target_height: 100
+#     corner_method: "contour"        # "contour" or "detector_keypoints"
+
+#   multi_frame:
+#     enabled: true                    # only used for video input
+#     max_frames: 12
+#     sharpness_percentile: 60         # keep frames above this Laplacian-variance percentile
+#     alignment: "ecc"                 # "ecc" (affine) or "orb" (homography)
+#     fusion: "median"                 # "median" or "mean"
+
+#   denoise:
+#     method: "fastNlMeans"            # "fastNlMeans" | "bilateral" | "none"
+#     h: 10
+#     template_window_size: 7
+#     search_window_size: 21
+
+#   deblur:
+#     method: "wiener"                 # "wiener" | "richardson_lucy" | "none"
+#     psf_size: 15
+#     snr: 25
+#     rl_iterations: 30
+
+#   super_resolution:
+#     enabled: true
+#     method: "real_esrgan"            # "real_esrgan" | "bicubic"
+#     model_name: "RealESRGAN_x4plus"
+#     scale: 4
+#     tile: 0                          # 0 = no tiling (small crops don't need it)
+
+#   contrast:
+#     method: "clahe"                  # "clahe" | "hist_eq" | "none"
+#     clip_limit: 2.0
+#     tile_grid_size: [8, 8]
+
+
+enhancement:
+  quality_guidance:
+    enabled: true
+    margin: 0.05
+    weights:
+      sharpness: 1.0
+      contrast: 1.0
+
+  perspective:
+    enabled: true
+    target_width: 200
+    target_height: 60
+
+  denoise:
+    enabled: true
+    method: "fastNlMeans"
+    h: 8
+    template_window_size: 3
+    search_window_size: 7
+
+  deblur:
+    enabled: true
+    method: "wiener"
+    # other deblur-specific params here
+
+  super_resolution:
+    enabled: false
+    method: "espcn"
+    scale: 2
+    model_name: null
+    tile: 0
+
+  contrast:
+    enabled: true
+    method: "clahe"
+    clip_limit: 2.0
+    tile_grid_size: [4, 4]
+
+  multi_frame:
+    enabled: true
+    max_frames: 5
+    sharpness_percentile: 80
+    alignment: "ecc"
+    fusion: "median"
+
+ocr:
+  engine: "easyocr"
+  languages: ["en"]
+  allowlist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  min_confidence: 0.30
+  target_char_height: 64.0
+  format_patterns:
+    # ---------- India ----------
+    # Standard: MH12AB1234 (state code, RTO code, series letters, 4-digit number)
+    - "^[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}$"
+    # # Standard, no series letters: MH121234 (older/some commercial plates)
+    # - "^[A-Z]{2}[0-9]{2}[0-9]{4}$"
+    # New BH-series (portable, state-neutral): 22BH1234AB
+    - "^[0-9]{2}BH[0-9]{4}[A-Z]{2}$"
+
+    # ---------- Australia ----------
+    # Most common current format (most states): 3 digits + 3 letters, e.g. 889VSM
+    - "^[0-9]{3}[A-Z]{3}$"
+    # Reverse order, also common: 3 letters + 3 digits, e.g. ABC123
+    - "^[A-Z]{3}[0-9]{3}$"
+    # Older NSW/VIC 2+2+2 style: AB12CD
+    - "^[A-Z]{2}[0-9]{2}[A-Z]{2}$"
+    # WA/SA style: 1 letter + 3 digits + 1 letter, e.g. A123B
+    - "^[A-Z][0-9]{3}[A-Z]$"
+
+evaluation:
+  quality_metrics: ["psnr", "ssim"]
+  ocr_metrics: ["cer", "exact_match"]
+  save_visual_grids: true
+
+paths:
+  raw_dir: "data/raw"
+  processed_dir: "data/sample_outputs"
+  output_dir: "outputs"
+  log_dir: "outputs/logs"
