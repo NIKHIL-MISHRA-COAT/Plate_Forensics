@@ -42,50 +42,100 @@ Full training logs are in the executed notebooks (§3.2, §3.6).
 ## 2. Folder structure
 ---
 plate_forensics/
+
 ├── configs/config.yaml # all pipeline settings in one place
+
 ├── models/ # fine-tuned weights (detector + super-res)
+
 ├── src/ # all pipeline code
+
 ├── notebooks/ # fine-tuning notebooks (executed, with results)
+
 ├── scripts/ # command-line tools (run pipeline, evaluate)
+
 ├── app/streamlit_app.py # interactive demo
+
 ├── tests/ # unit tests
+
 └── images/ # result screenshots (§8)
 
 --- 
 
 ## 3. Pipeline architecture
 
-```mermaid
-flowchart TD
-    A[Input: image or video] --> B{Video?}
-    B -- yes --> C[Sample frames + track plate across burst]
-    B -- no --> D[Single frame]
-
-    C --> E[Detect plate: fine-tuned YOLOv8]
-    D --> E
-
-    C --> F[Multi-frame fusion: pick sharpest frames, align, merge]
-    F --> G[Fused crop]
-    E -- video path --> G
-    E -- image path --> H[Plate crop]
-    G --> H
-
-    H --> I[1. Fix angle/perspective]
-    I --> J[2. Remove noise]
-    J --> K[3. Remove blur]
-    K --> L[4. Super-resolve: fine-tuned Real-ESRGAN]
-    L --> M[5. Improve contrast]
-
-    M --> N[OCR: EasyOCR]
-    N --> O[Correct against known plate formats]
-    O --> P[Final: plate text + confidence + flags]
-
-    style E fill:#2b6cb0,color:#fff
-    style L fill:#2b6cb0,color:#fff
-    style N fill:#2b6cb0,color:#fff
-    style P fill:#2f855a,color:#fff
-```
-
+        ┌─────────────────────┐
+                    │  Input: image/video │
+                    └──────────┬──────────┘
+                               │
+                    ┌──────────┴──────────┐
+                    │      Video?         │
+                    └──────────┬──────────┘
+                   Yes │                │ No
+                       ▼                ▼
+        ┌─────────────────────┐  ┌──────────────┐
+        │ Sample frames +     │  │ Single frame │
+        │ track plate across  │  └──────┬───────┘
+        │ a short burst       │         │
+        └──────────┬──────────┘         │
+                    │                   │
+                    ▼                   │
+        ┌─────────────────────┐         │
+        │ Detect plate:       │◄────────┘
+        │ fine-tuned YOLOv8   │
+        │ (fallback: vehicle  │
+        │ box → Haar cascade) │
+        └──────────┬──────────┘
+                    │
+       Video path   │   Image path
+          ┌─────────┴─────────┐
+          ▼                   ▼
+┌──────────────────┐   ┌──────────────┐
+│ Multi-frame       │   │ Plate crop   │
+│ fusion: pick      │   └──────┬───────┘
+│ sharpest frames,  │          │
+│ align, merge      │          │
+└─────────┬─────────┘          │
+          │                    │
+          └─────────┬──────────┘
+                     ▼
+          ┌────────────────────┐
+          │ 1. Fix angle        │
+          │    (perspective)    │
+          └──────────┬──────────┘
+                     ▼
+          ┌────────────────────┐
+          │ 2. Remove noise     │
+          └──────────┬──────────┘
+                     ▼
+          ┌────────────────────┐
+          │ 3. Remove blur      │
+          └──────────┬──────────┘
+                     ▼
+          ┌─────────────────────┐
+          │ 4. Super-resolve    │
+          │  (fine-tuned        │
+          │   Real-ESRGAN)      │
+          └──────────┬──────────┘
+                     ▼
+          ┌─────────────────────┐
+          │ 5. Boost contrast   │
+          │    (CLAHE)          │
+          └──────────┬──────────┘
+                     ▼
+          ┌────────────────────┐
+          │  OCR: EasyOCR       │
+          └──────────┬──────────┘
+                     ▼
+          ┌────────────────────┐
+          │ Correct against     │
+          │ known plate formats │
+          └──────────┬──────────┘
+                     ▼
+          ┌─────────────────────┐
+          │ Output: plate text  │
+          │ + confidence        │
+          │ + review flag       │
+          └────────────────────┘
 Every step is a toggle in `configs/config.yaml`, so each one's actual
 contribution can be turned off and compared.
 
