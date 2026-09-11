@@ -63,81 +63,8 @@ plate_forensics/
 
 ## 3. Pipeline architecture
 
-        ┌─────────────────────┐
-                    │  Input: image/video │
-                    └──────────┬──────────┘
-                               │
-                    ┌──────────┴──────────┐
-                    │      Video?         │
-                    └──────────┬──────────┘
-                   Yes │                │ No
-                       ▼                ▼
-        ┌─────────────────────┐  ┌──────────────┐
-        │ Sample frames +     │  │ Single frame │
-        │ track plate across  │  └──────┬───────┘
-        │ a short burst       │         │
-        └──────────┬──────────┘         │
-                    │                   │
-                    ▼                   │
-        ┌─────────────────────┐         │
-        │ Detect plate:       │◄────────┘
-        │ fine-tuned YOLOv8   │
-        │ (fallback: vehicle  │
-        │ box → Haar cascade) │
-        └──────────┬──────────┘
-                    │
-       Video path   │   Image path
-          ┌─────────┴─────────┐
-          ▼                   ▼
-┌──────────────────┐   ┌──────────────┐
-│ Multi-frame       │   │ Plate crop   │
-│ fusion: pick      │   └──────┬───────┘
-│ sharpest frames,  │          │
-│ align, merge      │          │
-└─────────┬─────────┘          │
-          │                    │
-          └─────────┬──────────┘
-                     ▼
-          ┌────────────────────┐
-          │ 1. Fix angle        │
-          │    (perspective)    │
-          └──────────┬──────────┘
-                     ▼
-          ┌────────────────────┐
-          │ 2. Remove noise     │
-          └──────────┬──────────┘
-                     ▼
-          ┌────────────────────┐
-          │ 3. Remove blur      │
-          └──────────┬──────────┘
-                     ▼
-          ┌─────────────────────┐
-          │ 4. Super-resolve    │
-          │  (fine-tuned        │
-          │   Real-ESRGAN)      │
-          └──────────┬──────────┘
-                     ▼
-          ┌─────────────────────┐
-          │ 5. Boost contrast   │
-          │    (CLAHE)          │
-          └──────────┬──────────┘
-                     ▼
-          ┌────────────────────┐
-          │  OCR: EasyOCR       │
-          └──────────┬──────────┘
-                     ▼
-          ┌────────────────────┐
-          │ Correct against     │
-          │ known plate formats │
-          └──────────┬──────────┘
-                     ▼
-          ┌─────────────────────┐
-          │ Output: plate text  │
-          │ + confidence        │
-          │ + review flag       │
-          └────────────────────┘
-Every step is a toggle in `configs/config.yaml`, so each one's actual
-contribution can be turned off and compared.
+![pipeline](Images/pipeline_flowchart.png) 
+
 
 ### 3.1 Why the steps run in this order
 
