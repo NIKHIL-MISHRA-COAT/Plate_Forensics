@@ -350,6 +350,6 @@ some gap between artificial and real-world damage will always remain.
 
 ![Test 4](Images/result_test4.png)
 
-### Test 5
+### Test 5 (video)
 
 ![Test 5](Images/result_test5_video.png)
